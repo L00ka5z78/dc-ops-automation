@@ -134,3 +134,11 @@ Powrót do poprzedniej wersji: przywróć poprzednią wartość `N8N_VERSION`, `
 | Błąd o *secure cookie* w przeglądarce | Dostęp przez IP po HTTP | Użyj tunelu i `http://localhost:5678` |
 | n8n nie łączy się z Prometheusem na hoście | Firewall mon1 blokuje ruch z podsieci Dockera (`172.30.0.0/24`) do `:9090` | `iptables-save`; ewentualna reguła INPUT dla `172.30.0.0/24` na port 9090 — zapisz zmianę w dokumentacji |
 | Port 5678 widoczny na `0.0.0.0` | Zmieniony mapping portów | Przywróć `127.0.0.1:5678:5678` w `docker-compose.yml` |
+
+## Notatki z pierwszego wdrożenia (2026-11-05)
+
+- **Dysk:** wolumen `/` na mon1 miał 10 GB mimo 18 GB w VG (wolne 8,2 GB). Przed instalacją Dockera rozszerzony: `sudo lvextend -r -l +100%FREE /dev/ubuntu-vg/ubuntu-lv`. Preflight wymaga ≥ 5 GB wolnego.
+- **Docker:** `setup-docker.sh` z repo bazowego przerywał się na starcie (wywołanie niezdefiniowanej funkcji `log_info`), dlatego Docker zainstalowano ręcznie według oficjalnej procedury apt.
+- **Pobieranie obrazu:** przy pierwszej próbie połączenie z rejestrem zerwało się (`failed to send write: EOF`); ponowienie dokończyło pobieranie (łącznie ok. 12 minut). Warstwy zostają w cache, więc `docker compose pull` można bezpiecznie powtarzać.
+- **Wersja:** n8n 2.46.6, przypięta w `.env`.
+- **Firewall:** zmiany po instalacji Dockera opisane w [mon1-firewall-baseline.md](../mon1-firewall-baseline.md).
