@@ -16,7 +16,7 @@ Plan: 4 tygodnie × 5 dni × ok. 3 h. Rytm dnia: ~2 h budowa, ~30 min test, ~30 
 
 ## Tydzień 1 — fundament
 
-- [ ] **D1** Szkielet repo, README, diagram docelowej architektury
+- [x] **D1** Szkielet repo, README, diagram docelowej architektury
 - [ ] **D2** `preflight-mon1.sh`, Docker na dc-monitor-01, n8n uruchomiony (`127.0.0.1:5678`), dostęp przez tunel SSH, konto właściciela
 - [ ] **D3** Hardening: potwierdzenie, że port nie jest wystawiony (`ss -tlnp`), `iptables-save` z mon1 do dokumentacji, użytkownik `n8n-bot` + ograniczone sudo + klucz SSH, `AllowUsers`
 - [ ] **D4** Monitoring samego n8n: job w Prometheusie, alert `n8nDown` omijający n8n, test awarii → **AUT-001**
