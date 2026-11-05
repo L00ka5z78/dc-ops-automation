@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------
+# Sekrety — NIGDY nie commituj
+# ---------------------------------------------------------------
+.env
+!.env.example
+*.key
+*.pem
+id_ed25519*
+id_rsa*
+secrets/
+*_token
+*.token
+*password*
+*secret*
+
+# ---------------------------------------------------------------
+# Dane runtime n8n (baza, klucze, logi wykonań)
+# ---------------------------------------------------------------
+n8n_data/
+*.sqlite
+*.sqlite-journal
+.n8n/
+
+# Eksporty tymczasowe i backupy wolumenów
+*.tar.gz
+wf-export/
+
+# Logi, pliki tymczasowe
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Notatki robocze
+docs/notes/
+*.draft.md
+
+# Python
+__pycache__/
+*.pyc
+
+# System / edytory
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Windows (artefakty kopiowania do WSL)
+*:Zone.Identifier

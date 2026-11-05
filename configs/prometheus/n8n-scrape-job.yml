@@ -1,0 +1,10 @@
+# Fragment do wklejenia w sekcji `scrape_configs:` w /etc/prometheus/prometheus.yml
+# (dzień 4). Wymaga N8N_METRICS=true w docker-compose (endpoint /metrics).
+
+  - job_name: "n8n"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:5678"]
+        labels:
+          host: "dc-monitor-01"
+          component: "automation"

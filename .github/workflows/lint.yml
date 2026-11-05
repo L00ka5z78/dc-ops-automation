@@ -1,0 +1,85 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck
+        run: |
+          SCRIPTS=$(find . -name "*.sh" ! -path "./.git/*")
+          echo "Znalezione skrypty:"
+          echo "$SCRIPTS"
+          echo "$SCRIPTS" | xargs shellcheck --severity=warning
+
+  validate:
+    name: Validate configs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate YAML
+        run: |
+          sudo apt-get install -y python3-yaml
+          python3 - <<'PY'
+          import glob, sys, yaml
+          files = glob.glob("**/*.yml", recursive=True) + glob.glob("**/*.yaml", recursive=True)
+          bad = 0
+          for f in files:
+              try:
+                  yaml.safe_load(open(f, encoding="utf-8"))
+                  print("OK  ", f)
+              except yaml.YAMLError as exc:
+                  print("FAIL", f, exc)
+                  bad += 1
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Validate exported workflows (JSON)
+        run: |
+          shopt -s nullglob
+          for f in n8n/workflows/*.json; do
+            python3 -m json.tool "$f" > /dev/null && echo "OK   $f"
+          done
+
+      - name: Validate docker-compose
+        run: |
+          N8N_VERSION=ci-check N8N_ENCRYPTION_KEY=ci-check \
+            docker compose -f n8n/docker/docker-compose.yml config -q
+          echo "docker-compose OK"
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan for secret-like content
+        run: |
+          # Wzorce celowo opisane w tym pliku, dlatego jest on wykluczony ze skanu.
+          if grep -rEI \
+              --exclude-dir=.git \
+              --exclude=lint.yml \
+              --exclude=n8n_sanitize_export.py \
+              -e 'ghp_[A-Za-z0-9]{20,}' \
+              -e 'github_pat_[A-Za-z0-9_]{20,}' \
+              -e 'xox[abprs]-[A-Za-z0-9-]{10,}' \
+              -e 'hooks\.slack\.com/services/T[A-Z0-9]{8,}/B[A-Z0-9]{8,}/[A-Za-z0-9]{20,}' \
+              -e 'BEGIN [A-Z ]*PRIVATE KEY' \
+              . ; then
+            echo "::error::Wykryto treść przypominającą sekret"
+            exit 1
+          fi
+          echo "Brak wykrytych sekretów"

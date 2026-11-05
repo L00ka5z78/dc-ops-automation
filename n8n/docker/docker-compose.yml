@@ -1,0 +1,88 @@
+# =============================================================================
+# n8n — orkiestrator automatyzacji DC Ops
+# Host:      dc-monitor-01 (10.20.20.10)
+# Katalog:   /opt/n8n
+# Uruchomienie: docker compose --env-file .env up -d
+# =============================================================================
+
+name: dc-ops-automation
+
+services:
+  n8n:
+    # Wersja przypięta w .env (N8N_VERSION). Nie używaj 'latest'.
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:?Ustaw N8N_VERSION w pliku .env}
+    container_name: n8n
+    restart: unless-stopped
+
+    # Tylko loopback: brak ekspozycji sieciowej. Dostęp do UI przez tunel SSH.
+    # (Docker publikuje porty z pominięciem łańcucha INPUT iptables — dlatego
+    #  nie wystawiamy portu na interfejsie sieciowym.)
+    ports:
+      - "127.0.0.1:5678:5678"
+
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?Ustaw N8N_ENCRYPTION_KEY w pliku .env}
+      - GENERIC_TIMEZONE=Europe/Warsaw
+      - TZ=Europe/Warsaw
+      # Metryki dla Prometheusa (endpoint /metrics)
+      - N8N_METRICS=true
+      # Bez telemetrii
+      - N8N_DIAGNOSTICS_ENABLED=false
+      # Historia wykonań może zawierać nazwy hostów i fragmenty logów — czyść po 7 dniach
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+    # Dostęp do Prometheusa/Alertmanagera działających na hoście (systemd)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - n8n_net
+
+    # Healthcheck bez zależności od powłoki w obrazie
+    healthcheck:
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "fetch('http://127.0.0.1:5678/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # Limity zasobów (maszyna monitoringu ma ograniczone zasoby)
+    mem_limit: 1g
+    cpus: "1.0"
+
+    # Hardening
+    security_opt:
+      - no-new-privileges:true
+    # Opcjonalnie (dzień 3): odkomentuj i sprawdź, czy kontener nadal startuje
+    # cap_drop:
+    #   - ALL
+
+    # Rotacja logów kontenera
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  n8n_data:
+    name: n8n_data
+
+networks:
+  n8n_net:
+    name: n8n_net
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

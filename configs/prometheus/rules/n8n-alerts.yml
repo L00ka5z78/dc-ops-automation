@@ -1,0 +1,17 @@
+# /etc/prometheus/rules/n8n-alerts.yml  (dzień 4)
+#
+# Etykieta component="automation" powoduje, że Alertmanager kieruje ten alert
+# bezpośrednio na Slacka, z pominięciem n8n (patrz configs/alertmanager/alertmanager.yml).
+
+groups:
+  - name: automation_alerts
+    rules:
+      - alert: n8nDown
+        expr: up{job="n8n"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: automation
+        annotations:
+          summary: "n8n niedostępny na {{ $labels.instance }}"
+          description: "Prometheus nie może pobrać metryk z n8n od ponad 1 minuty. Automatyzacje (WF-01..04) nie działają; alertowanie na Slacka działa nadal."
