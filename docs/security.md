@@ -40,3 +40,8 @@ n8n będzie miał klucze SSH do maszyn labu, token GitHub i dostęp do Slacka. T
 - [ ] Pliki w `n8n/workflows/` nie zawierają tokenów ani danych testowych (`pinData`)
 - [ ] CI (skan sekretów) zielone
 - [ ] Zrzuty ekranu nie pokazują tokenów, adresów webhooków ani kluczy
+
+## Backlog utwardzania (znane ograniczenia)
+
+- **Task runner w trybie internal.** n8n 2.46.6 ostrzega, że tryb internal jest przestarzały i zostanie usunięty. Zalecany jest tryb external (osobny kontener runnera, współdzielony `N8N_RUNNERS_AUTH_TOKEN`). Ryzyko zaakceptowane na czas fazy 1 (jeden użytkownik, brak niezaufanego kodu); do ponownej oceny przy każdej aktualizacji wersji.
+- **Domyślne limity węzła Compression i timeout runnera** zmienią się w przyszłych wersjach — sprawdzać w release notes przed aktualizacją.
